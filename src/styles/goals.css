@@ -1,0 +1,294 @@
+/* ----------------------------------------------------------------- goals */
+.goals {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.goal-add {
+  flex: none;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: var(--surface-2);
+}
+.goal-add-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  height: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.goal-add-row:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-softer);
+}
+.goal-add-row input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+.goal-add-row input::placeholder {
+  color: var(--text-3);
+}
+.goal-add-spans {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.goal-add-hint {
+  font-size: var(--fs-xs);
+  margin-left: auto;
+  text-align: right;
+}
+.goals-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 10px 22px;
+}
+.goal-group .section-title {
+  padding-left: 2px;
+}
+.goal-done-toggle {
+  background: none;
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+}
+.goal-done-toggle:hover {
+  color: var(--text-2);
+}
+.goal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 8px 9px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  position: relative;
+}
+.goal-row:hover {
+  background: var(--surface-hover);
+}
+.goal-row[data-done="true"] .goal-title {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+.goal-row .check {
+  margin-top: 1px;
+}
+.goal-dot {
+  width: 3px;
+  align-self: stretch;
+  min-height: 30px;
+  border-radius: 3px;
+  flex: none;
+}
+.goal-main {
+  flex: 1;
+  min-width: 0;
+}
+.goal-title {
+  font-size: var(--fs-md);
+  line-height: 1.3;
+  color: var(--text);
+}
+.goal-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.goal-sep {
+  opacity: 0.6;
+}
+.goal-progress {
+  margin-top: 6px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.goal-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  transition: width var(--dur) var(--ease);
+}
+.goal-delete {
+  opacity: 0;
+  flex: none;
+}
+.goal-row:hover .goal-delete {
+  opacity: 1;
+}
+.goals-note {
+  margin: 16px 2px 0;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+/* goals as they appear inside the other views ------------------------- */
+.month-event[data-goal="true"] {
+  border-left: 2px dashed color-mix(in srgb, var(--ev-color, var(--accent)) 75%, transparent);
+  background: color-mix(in srgb, var(--ev-color, var(--accent)) 9%, transparent);
+  color: var(--text-2);
+}
+.month-event[data-goal="true"]:hover {
+  background: color-mix(in srgb, var(--ev-color, var(--accent)) 16%, transparent);
+}
+/* Goals sit in their own fold-out row above the all-day line, so they never
+   repeat under every day of the week. */
+.tg-goals {
+  flex: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.tg-goals-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 24px;
+  padding: 0 8px;
+  color: var(--text-3);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+}
+.tg-goals-head:hover {
+  color: var(--text-2);
+}
+.tg-goals-chevron {
+  flex: none;
+  transition: transform var(--dur) var(--ease);
+}
+.tg-goals[data-open="false"] .tg-goals-chevron {
+  transform: rotate(-90deg);
+}
+.tg-goals-count {
+  display: inline-flex;
+  align-items: center;
+  height: 14px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 9px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.tg-goals-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 1px 8px 6px;
+  max-height: 62px;
+  overflow-y: auto;
+}
+.tg-goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, var(--ev-color, var(--accent)) 32%, var(--border));
+  background: color-mix(in srgb, var(--ev-color, var(--accent)) 9%, var(--surface));
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.tg-goal:hover {
+  background: color-mix(in srgb, var(--ev-color, var(--accent)) 16%, var(--surface));
+  color: var(--text);
+}
+.tg-goal svg {
+  color: var(--ev-color, var(--accent));
+}
+.tg-goal-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tg-goal-when {
+  flex: none;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-row[data-goal="true"] .agenda-bar {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ev-color, var(--accent)) 0 4px,
+    transparent 4px 7px
+  );
+}
+.agenda-goals {
+  padding: 10px 12px 2px;
+  border-bottom: 1px solid var(--border);
+}
+/* A goal marks a single day: the day it falls due. */
+.year-goal-mark {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: var(--accent-ink);
+}
+.year-day[data-today="true"] .year-goal-mark {
+  background: var(--accent-fg);
+}
+.tl-row[data-goal="true"] .tl-bar {
+  height: 12px;
+  border-radius: 6px;
+  opacity: 0.85;
+}
+.tl-row[data-goal="true"] .tl-bar[data-open="true"] {
+  mask-image: linear-gradient(90deg, #000 72%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 72%, transparent 100%);
+}
+.tl-row[data-goal="true"] .tl-name {
+  cursor: pointer;
+}
+.tl-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: sticky;
+  left: 0;
+  height: 24px;
+  padding: 0 10px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.tl-row[data-goal="true"] .tl-name svg {
+  margin-top: 2px;
+}

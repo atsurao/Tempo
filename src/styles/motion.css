@@ -1,0 +1,168 @@
+/* -------------------------------------------------------------- motion */
+/*
+ * Motion is feedback, not decoration. The check lands, progress catches up,
+ * the destination you chose acknowledges the tap, and a tag's colour leads the
+ * eye to the same task collection everywhere. The global reduced-motion rule
+ * in base.css collapses all of it for readers who ask for less movement.
+ */
+
+:root {
+  --spring: cubic-bezier(0.2, 0.95, 0.3, 1.18);
+}
+
+.task-row {
+  transition:
+    background var(--dur) var(--ease),
+    transform 120ms var(--ease);
+}
+.task-row:active {
+  transform: scale(0.998);
+}
+.task-row[data-done="true"] .task-title {
+  transition: color var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+/* Completion gives the row a beat to leave before filtering removes it. */
+.task-row[data-completing="true"],
+.today-row[data-completing="true"] {
+  overflow: hidden;
+  min-height: 0;
+  max-height: 220px;
+  pointer-events: none;
+  animation: row-complete-out 210ms var(--ease) forwards;
+}
+.task-row[data-completing="true"] .task-title,
+.today-row[data-completing="true"] .today-title {
+  text-decoration: line-through;
+  color: var(--text-3);
+}
+@keyframes row-complete-out {
+  from {
+    max-height: 220px;
+  }
+  45% {
+    opacity: 0.5;
+    transform: translateX(3px);
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    transform: translateX(6px);
+  }
+}
+.check {
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    transform 120ms var(--ease);
+}
+.check:active {
+  transform: scale(0.86);
+}
+.check[data-checked="true"] {
+  animation: check-land 260ms var(--spring);
+}
+.check[data-checked="true"] svg {
+  animation: check-mark 220ms var(--spring);
+}
+.task-progress > span {
+  transition: width 340ms var(--spring);
+}
+
+.tag {
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.tag:hover {
+  color: var(--text-2);
+  transform: translateY(-1px);
+}
+
+.filter-chip {
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    transform 120ms var(--ease);
+}
+.filter-chip:active {
+  transform: scale(0.96);
+}
+.filter-chip[data-active="true"] {
+  animation: chip-settle 190ms var(--ease);
+}
+
+.pane-body > * {
+  animation: view-settle 190ms var(--ease);
+}
+.rail-item svg,
+.mobile-tab svg {
+  transition: transform 160ms var(--ease), color var(--dur) var(--ease);
+}
+.rail-item:hover svg {
+  transform: translateX(1px) scale(1.06);
+}
+.rail-item:active svg {
+  transform: scale(0.92);
+}
+.mobile-tab[data-active="true"] svg {
+  animation: tab-land 250ms var(--spring);
+}
+.mobile-tab:active svg {
+  transform: scale(0.9);
+}
+
+@keyframes check-land {
+  0% {
+    transform: scale(0.82);
+  }
+  55% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes check-mark {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-10deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.12) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes chip-settle {
+  from {
+    transform: scale(0.96);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes tab-land {
+  0% {
+    transform: translateY(1px) scale(0.86);
+  }
+  55% {
+    transform: translateY(-2px) scale(1.1);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes view-settle {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

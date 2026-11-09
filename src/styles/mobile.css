@@ -1,0 +1,1559 @@
+/* ------------------------------------------------------------ phone shell */
+/*
+ * One flat surface, thumb-sized controls and bottom sheets. The desktop
+ * multi-pane workspace remains untouched; this file only applies while the
+ * shell reports a phone-sized, touch-first viewport.
+ */
+
+.app[data-mobile] {
+  --bar-h: 50px;
+  --fs-xs: 11.5px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 23px;
+  --fs-2xl: 28px;
+  --row-h: 42px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: calc(var(--bar-h) + env(safe-area-inset-top)) minmax(0, 1fr) auto;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.app[data-mobile] .topbar {
+  gap: 3px;
+  padding: env(safe-area-inset-top) 6px 0 8px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: saturate(1.4) blur(16px);
+}
+.app[data-mobile] .brand {
+  height: 36px;
+  padding: 0 4px 0 2px;
+  margin-left: -2px;
+}
+.app[data-mobile] .about-popover {
+  top: calc(var(--bar-h) + env(safe-area-inset-top) + 6px);
+  left: 8px;
+  width: min(302px, calc(100vw - 16px));
+}
+.app[data-mobile] .about-close {
+  width: 32px;
+  height: 32px;
+}
+
+.app[data-mobile] .brand-mark {
+  width: 21px;
+  height: 21px;
+}
+.app[data-mobile] .brand-name,
+.app[data-mobile] .layout-anchor {
+  display: none;
+}
+.app[data-mobile] .topbar > .spacer {
+  display: none;
+}
+.app[data-mobile] .topbar-center {
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+  gap: 0;
+  margin-left: 0;
+}
+.app[data-mobile] .topbar-center > .btn.sm {
+  height: 34px;
+  padding: 0 9px;
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .topbar-center > .icon-btn {
+  width: 32px;
+  height: 36px;
+}
+.app[data-mobile] .topbar-date {
+  flex: 1;
+  min-width: 0;
+  max-width: 136px;
+  padding: 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .searchbtn {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.app[data-mobile] .searchbtn span {
+  display: none;
+}
+.app[data-mobile] .topbar > .icon-btn {
+  width: 36px;
+  height: 36px;
+}
+
+.app[data-mobile] .app-body {
+  min-height: 0;
+  overflow: hidden;
+}
+.app[data-mobile] .workspace[data-mobile="true"] {
+  flex: 1;
+  padding: 0;
+  min-height: 0;
+}
+.app[data-mobile] .workspace[data-mobile="true"],
+.app[data-mobile] .workspace[data-mobile="true"] .pane-col {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane,
+.app[data-mobile] .workspace[data-mobile="true"] .pane-body {
+  min-width: 0;
+  max-width: 100%;
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane-body > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane-head {
+  flex: none;
+  gap: 4px;
+  min-height: 40px;
+  padding: 2px 6px 2px 10px;
+  background: var(--surface);
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane-title {
+  flex: none;
+  color: var(--text-3);
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane-title > span {
+  display: none;
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane-actions {
+  gap: 1px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane-actions::-webkit-scrollbar {
+  display: none;
+}
+.app[data-mobile] .workspace[data-mobile="true"] .pane-body {
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------- bottom tabs */
+/* The dock is the app grid's third row; the edit bar grows above the tabs
+   when a long press turns them into editable slots. */
+.mobile-dock {
+  position: relative;
+  z-index: 70;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-tabs {
+  z-index: 70;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px 5px calc(3px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: saturate(1.4) blur(18px);
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.mobile-tab {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 2px;
+  border-radius: 11px;
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.mobile-tab:active {
+  background: var(--surface-hover);
+}
+.mobile-tab[data-active="true"] {
+  color: var(--accent-ink);
+  background: var(--accent-softer);
+}
+.mobile-tab span {
+  line-height: 1.1;
+}
+
+/* ------------------------------------------------------ tab editing */
+.mobile-tabs-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 5px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  animation: fade 140ms var(--ease);
+}
+.mobile-tabs-edit-hint {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--text-3);
+}
+.mobile-tabs-edit .btn {
+  height: 32px;
+  min-height: 32px;
+  flex: none;
+}
+.mobile-tabs-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 0.22);
+  animation: fade 120ms var(--ease);
+}
+.mobile-tab-slot {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+.mobile-tab-slot .mobile-tab {
+  flex: 1;
+  width: 100%;
+}
+.mobile-tabs[data-editing="true"],
+.mobile-tabs[data-editing="true"] .mobile-tab {
+  touch-action: none;
+}
+.mobile-tab-slot[data-dragging="true"] {
+  z-index: 2;
+}
+.mobile-tab-slot[data-dragging="true"] .mobile-tab {
+  background: var(--surface-hover);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.mobile-tab-remove {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 99px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-3);
+  color: var(--text-2);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+.mobile-tab-remove:disabled {
+  opacity: 0.35;
+}
+
+/* --------------------------------------------------------------- sheets */
+.mobile-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: flex-end;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  animation: fade 120ms var(--ease);
+}
+.mobile-sheet {
+  width: 100%;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0 env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--border-strong);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 0.28);
+  animation: mobile-sheet-in 200ms var(--ease);
+}
+.mobile-sheet-grabber {
+  width: 34px;
+  height: 4px;
+  flex: none;
+  margin: 2px auto 4px;
+  border-radius: 99px;
+  background: var(--border-strong);
+}
+/* A real grabber is both the visual handle and the swipe target. Its touch
+   action is disabled only here, leaving menu content free to scroll. */
+.sheet-drag-handle {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 100%;
+  height: 28px;
+  margin: -5px -10px 1px;
+  background: var(--surface);
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.sheet-drag-handle > span {
+  width: 34px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border-strong);
+  pointer-events: none;
+}
+.sheet-drag-handle:active {
+  cursor: grabbing;
+}
+.ctx[data-swiping="true"] .sheet-drag-handle > span,
+.task-view-menu[data-swiping="true"] .sheet-drag-handle > span {
+  background: var(--text-3);
+}
+.mobile-sheet-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 10px 18px;
+}
+.mobile-sheet-title {
+  display: block;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.mobile-sheet-sub {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.mobile-sheet-head .icon-btn {
+  margin-left: auto;
+  width: 38px;
+  height: 38px;
+}
+.mobile-sheet-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 14px 20px;
+}
+.mobile-sheet-label {
+  padding: 12px 4px 7px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.mobile-more-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mobile-more-card {
+  min-height: 86px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  text-align: left;
+}
+.mobile-more-card:active {
+  background: var(--surface-hover);
+}
+.mobile-more-icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.mobile-more-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--fs-md);
+  font-weight: 500;
+}
+.mobile-more-text span:last-child {
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-3);
+}
+.mobile-more-chevron {
+  align-self: center;
+  margin-left: auto;
+  color: var(--text-3);
+}
+.mobile-more-list {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+.mobile-more-row {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-more-row:last-child {
+  border-bottom: 0;
+}
+.mobile-more-row:active {
+  background: var(--surface-hover);
+}
+.mobile-more-row > svg:first-child {
+  flex: none;
+  color: var(--text-3);
+}
+.mobile-more-row > span:nth-child(2) {
+  font-size: var(--fs-md);
+}
+.mobile-more-hint {
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.mobile-more-row > svg:last-child {
+  flex: none;
+  color: var(--text-3);
+}
+
+@keyframes mobile-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------- touch sizes */
+.app[data-mobile] .btn {
+  min-height: 34px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .btn.sm {
+  min-height: 30px;
+  height: 30px;
+  padding: 0 9px;
+  font-size: var(--fs-xs);
+}
+.app[data-mobile] .btn.icon {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+}
+.app[data-mobile] .icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+.app[data-mobile] .icon-btn:active {
+  background: var(--surface-hover);
+}
+.app[data-mobile] .input,
+.app[data-mobile] input[type="text"],
+.app[data-mobile] input[type="search"],
+.app[data-mobile] input[type="number"],
+.app[data-mobile] input[type="datetime-local"],
+.app[data-mobile] input[type="date"],
+.app[data-mobile] input[type="time"] {
+  min-height: 38px;
+  font-size: 16px;
+}
+.app[data-mobile] textarea,
+.app[data-mobile] .note-textarea,
+.app[data-mobile] .sheet-title {
+  font-size: 16px;
+}
+.app[data-mobile] .sheet-title {
+  font-size: 23px;
+}
+.app[data-mobile] .check {
+  width: 21px;
+  height: 21px;
+  border-radius: 6px;
+}
+.app[data-mobile] .seg button {
+  height: 30px;
+  padding: 0 9px;
+  font-size: var(--fs-xs);
+}
+.app[data-mobile] .dd-trigger {
+  min-height: 38px;
+  height: auto;
+  font-size: 15px;
+}
+.app[data-mobile] .cal-mode-select {
+  flex: none;
+  width: auto;
+  min-width: 78px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 7px;
+  gap: 3px;
+  border-color: transparent;
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .dd-menu {
+  max-width: calc(100vw - 16px);
+  max-height: 60dvh;
+}
+.app[data-mobile] .dd-option {
+  min-height: 42px;
+  height: auto;
+  font-size: 15px;
+}
+.app[data-mobile] .filter-chip {
+  min-height: 32px;
+}
+.app[data-mobile] .menu-item {
+  min-height: 44px;
+  font-size: 15px;
+}
+.app[data-mobile] .kbd {
+  display: none;
+}
+
+/* Keep long presses for menus instead of WKWebView's text/image callout. */
+.app[data-mobile] button,
+.app[data-mobile] .today-row,
+.app[data-mobile] .task-row,
+.app[data-mobile] .note-item,
+.app[data-mobile] .collection-card,
+.app[data-mobile] .project-row,
+.app[data-mobile] .agenda-row,
+.app[data-mobile] .ctx {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.app[data-mobile] textarea,
+.app[data-mobile] input,
+.app[data-mobile] .note-textarea,
+.app[data-mobile] .md {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* --------------------------------------------------------------- today */
+.app[data-mobile] .today {
+  padding: 14px 14px calc(24px + env(safe-area-inset-bottom));
+}
+.app[data-mobile] .today-head {
+  margin-bottom: 10px;
+}
+.app[data-mobile] .today-h1 {
+  font-size: 25px;
+}
+.app[data-mobile] .today-row {
+  min-height: 46px;
+  padding: 8px 6px;
+  gap: 9px;
+}
+.app[data-mobile] .today-time {
+  width: 58px;
+  font-size: 12px;
+}
+.app[data-mobile] .today-title {
+  font-size: 15px;
+}
+.app[data-mobile] .next-card {
+  padding: 12px;
+}
+.app[data-mobile] .today-habit {
+  min-height: 40px;
+  padding: 7px 9px;
+}
+.app[data-mobile] .today-habits-row {
+  gap: 7px;
+}
+
+/* --------------------------------------------------------------- tasks */
+.app[data-mobile] .tasks-toolbar {
+  padding: 6px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.app[data-mobile] .tasks-toolbar::-webkit-scrollbar {
+  display: none;
+}
+.app[data-mobile] .task-view-trigger {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .task-view-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: flex-end;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  animation: fade 120ms var(--ease);
+}
+.app[data-mobile] .task-view-menu.task-view-sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-height: 82dvh;
+  padding: 5px 10px calc(12px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  animation: mobile-sheet-in 200ms var(--ease);
+}
+.app[data-mobile] .task-view-heading {
+  min-height: 36px;
+  font-size: var(--fs-lg);
+}
+.app[data-mobile] .task-view-label,
+.app[data-mobile] .task-view-label-row {
+  padding-top: 11px;
+  font-size: 11px;
+}
+.app[data-mobile] .task-view-sort {
+  min-height: 40px;
+  font-size: 15px;
+}
+.app[data-mobile] .task-view-tag {
+  min-height: 42px;
+  font-size: 15px;
+}
+.app[data-mobile] .task-view-tags {
+  max-height: none;
+  overflow: visible;
+}
+.app[data-mobile] .task-view-hint {
+  margin-top: 10px;
+  font-size: 11.5px;
+}
+.app[data-mobile] .task-progress-line {
+  max-width: 100%;
+}
+.app[data-mobile] .task-meta {
+  gap: 3px 8px;
+}
+/* The postpone control is a real thumb target on the phone, not a desktop
+   badge. Its extra height sits inside the row's existing padding. */
+.app[data-mobile] .postpone-btn {
+  height: 26px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+.app[data-mobile] .today-row .postpone-btn {
+  height: 28px;
+  font-size: 12px;
+}
+.app[data-mobile] .board-card-meta .postpone-btn,
+.app[data-mobile] .tl-postpone {
+  height: 22px;
+  font-size: 10px;
+}
+.app[data-mobile] .task-row {
+  min-height: 52px;
+  padding: 8px 10px;
+}
+.app[data-mobile] .task-title {
+  font-size: 15px;
+}
+.app[data-mobile] .task-actions {
+  opacity: 1;
+}
+.app[data-mobile] .task-add-row {
+  min-height: 42px;
+}
+.app[data-mobile] .board {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.app[data-mobile] .board-col {
+  min-width: min(82vw, 320px);
+  scroll-snap-align: start;
+}
+.app[data-mobile] .board-card {
+  min-height: 52px;
+}
+.app[data-mobile] .board-card-delegate {
+  opacity: 1;
+}
+.app[data-mobile] .timeline {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.app[data-mobile] .quick-add {
+  margin: 8px 12px 0;
+}
+
+/* ------------------------------------------------------------ calendar */
+.app[data-mobile] .cal {
+  min-width: 0;
+}
+.app[data-mobile] .tg {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.app[data-mobile] .tg-sticky,
+.app[data-mobile] .tg-body {
+  min-width: calc(52px + var(--tg-days, 7) * 108px);
+}
+.app[data-mobile] .tg-head-gutter,
+.app[data-mobile] .tg-gutter,
+.app[data-mobile] .tg-allday-label {
+  width: 44px;
+}
+.app[data-mobile] .tg-sticky,
+.app[data-mobile] .tg-body {
+  min-width: calc(44px + var(--tg-days, 7) * 108px);
+}
+.app[data-mobile] .tg-dayhead .dnum {
+  width: 27px;
+  height: 27px;
+  font-size: 15px;
+}
+.app[data-mobile] .tg-allday-resizer {
+  bottom: -7px;
+  height: 14px;
+}
+.app[data-mobile] .tg-allday-resizer span {
+  width: 44px;
+  height: 3px;
+}
+.app[data-mobile] .month-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+.app[data-mobile] .month-grid {
+  min-width: 620px;
+}
+.app[data-mobile] .month-title {
+  position: sticky;
+  left: 0;
+}
+.app[data-mobile] .year-grid {
+  grid-template-columns: 1fr;
+}
+.app[data-mobile] .agenda {
+  padding: 10px 12px calc(22px + env(safe-area-inset-bottom));
+}
+.app[data-mobile] .agenda-row {
+  min-height: 48px;
+  padding: 8px 6px;
+}
+
+/* ------------------------------------------------------------- notes */
+.app[data-mobile] .notes-toolbar {
+  padding: 10px 12px;
+}
+.app[data-mobile] .note-item {
+  min-height: 66px;
+  padding: 12px 14px;
+}
+.app[data-mobile] .note-editor-head {
+  min-height: 52px;
+  padding: 6px 8px;
+  gap: 2px;
+}
+.app[data-mobile] .note-editor-title {
+  font-size: 18px;
+}
+.app[data-mobile] .note-body {
+  padding: 12px 14px calc(24px + env(safe-area-inset-bottom));
+}
+.app[data-mobile] .note-textarea {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------------------- focus/habits/goals */
+.app[data-mobile] .focus {
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+}
+.app[data-mobile] .focus-presets {
+  flex-wrap: wrap;
+}
+.app[data-mobile] .focus-preset {
+  min-height: 42px;
+  min-width: 60px;
+}
+.app[data-mobile] .focus-task {
+  margin-top: 12px;
+}
+.app[data-mobile] .habit-row,
+.app[data-mobile] .habit-item {
+  min-height: 52px;
+}
+.app[data-mobile] .goal-card {
+  min-height: 68px;
+}
+
+/* ----------------------------------------------------------- projects */
+.app[data-mobile] .projects,
+.app[data-mobile] .project-index,
+.app[data-mobile] .project-detail {
+  padding-left: 0;
+  padding-right: 0;
+}
+.app[data-mobile] .project-index-head,
+.app[data-mobile] .project-detail-head {
+  padding: 10px 12px;
+}
+.app[data-mobile] .project-card {
+  min-height: 72px;
+}
+.app[data-mobile] .gantt-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+.app[data-mobile] .gantt-toolbar {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.app[data-mobile] .gantt-scale input[type="range"] {
+  width: 100px;
+}
+
+/* --------------------------------------------------- weekly schedule */
+/* A session is a small card: name, then days, times and place on their own
+   lines, instead of one row that needs a 700px sheet. */
+.app[data-mobile] .sched-item,
+.app[data-mobile] .sched-break {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.app[data-mobile] .sched-item .input:first-child,
+.app[data-mobile] .sched-break .input:first-child {
+  order: 1;
+  flex: 1 1 calc(100% - 42px);
+  min-width: 0;
+}
+.app[data-mobile] .sched-item > .icon-btn:last-child,
+.app[data-mobile] .sched-break > .icon-btn:last-child {
+  order: 2;
+  flex: none;
+}
+.app[data-mobile] .sched-days {
+  order: 3;
+  flex: 1 1 100%;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.app[data-mobile] .sched-day {
+  width: 30px;
+  height: 30px;
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .sched-item .sched-time {
+  order: 4;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+.app[data-mobile] .sched-item .sched-dash {
+  order: 4;
+}
+.app[data-mobile] .sched-item .input:nth-last-child(2) {
+  order: 5;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.app[data-mobile] .sched-break .input[type="date"] {
+  order: 3;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+.app[data-mobile] .sched-break .sched-dash {
+  order: 3;
+}
+.app[data-mobile] .sched-span {
+  order: 4;
+  flex: 1 1 100%;
+  min-width: 0;
+  white-space: normal;
+}
+
+/* ------------------------------------------------------------- dialogs */
+.app[data-mobile] .modal-backdrop {
+  padding: 0;
+  align-items: flex-end;
+  backdrop-filter: blur(3px);
+}
+.app[data-mobile] .modal {
+  width: 100%;
+  max-height: 92dvh;
+  border-radius: 20px 20px 0 0;
+  border-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: mobile-sheet-in 200ms var(--ease);
+}
+.app[data-mobile] .modal-head {
+  min-height: 50px;
+  padding: 8px 10px 8px 16px;
+}
+.app[data-mobile] .modal-head .icon-btn {
+  width: 38px;
+  height: 38px;
+}
+.app[data-mobile] .modal-title {
+  font-size: 18px;
+}
+.app[data-mobile] .modal-body {
+  padding: 14px 16px calc(22px + env(safe-area-inset-bottom));
+}
+.app[data-mobile] .modal.settings-modal {
+  width: 100%;
+  height: 92dvh;
+  max-height: 92dvh;
+}
+
+/* Settings becomes a vertical sheet with a horizontally scrollable category
+   strip, rather than the desktop's fixed 196px sidebar. */
+.app[data-mobile] .settings-shell {
+  display: flex;
+  flex-direction: column;
+}
+.app[data-mobile] .settings-nav {
+  flex: none;
+  gap: 7px;
+  padding: 8px 10px 5px;
+  border-right: 0;
+  border-bottom: 1px solid var(--border);
+}
+.app[data-mobile] .settings-search-input {
+  height: 36px;
+  font-size: 15px;
+}
+.app[data-mobile] .settings-nav-list {
+  flex: none;
+  flex-direction: row;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 3px;
+}
+.app[data-mobile] .settings-nav-list::-webkit-scrollbar {
+  display: none;
+}
+.app[data-mobile] .settings-nav-item {
+  flex: none;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .settings-nav-item[data-active="true"] {
+  border-color: transparent;
+  background: var(--accent-soft);
+}
+.app[data-mobile] .settings-nav-foot {
+  display: none;
+}
+.app[data-mobile] .settings-content {
+  flex: 1;
+  min-height: 0;
+}
+.app[data-mobile] .settings-content-head {
+  padding: 10px 16px 8px;
+}
+.app[data-mobile] .settings-body {
+  padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
+  scrollbar-gutter: auto;
+}
+.app[data-mobile] .settings-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  min-height: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.app[data-mobile] .settings-row > .settings-label {
+  width: auto;
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+.app[data-mobile] .settings-row > .settings-control {
+  justify-content: flex-start;
+  gap: 7px;
+}
+.app[data-mobile] .settings-hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.app[data-mobile] .settings-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.app[data-mobile] .settings-pane {
+  gap: 12px;
+}
+/* Section wrappers exist on desktop too (all sections shown), so the gap has
+   to survive outside the phone shell. */
+.settings-subpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.settings-subpanel[hidden] {
+  display: none;
+}
+.app[data-mobile] .settings-shortcuts .settings-row,
+.app[data-mobile] .settings-shortcuts > div {
+  flex-direction: row;
+  align-items: center;
+}
+.settings-gesture {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-gesture:last-of-type {
+  border-bottom: 0;
+}
+.settings-gesture-label {
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--text);
+}
+.settings-gesture-how {
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.app[data-mobile] .settings-value {
+  font-size: var(--fs-xs);
+}
+
+/* Navigation rows are the tap targets here: arrows get 34px, and the label
+   grows to the same size as other phone settings labels. */
+.app[data-mobile] .nav-custom-row {
+  min-height: 52px;
+  gap: 10px;
+  padding: 6px 10px;
+}
+.app[data-mobile] .nav-custom-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+.app[data-mobile] .nav-custom-head .settings-label {
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+.app[data-mobile] .nav-custom-label {
+  font-size: var(--fs-md);
+}
+.app[data-mobile] .nav-custom-move .icon-btn {
+  width: 34px;
+  height: 34px;
+}
+.app[data-mobile] .nav-custom-hint {
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.app[data-mobile] .nav-custom-reset {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* The full item/goal editor is a page on a phone, not a floating card. */
+.app[data-mobile] .sheet {
+  inset: 0;
+  width: auto;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  z-index: 96;
+  padding-top: env(safe-area-inset-top);
+  animation: fade 150ms var(--ease);
+}
+.app[data-mobile] .sheet-head {
+  min-height: 52px;
+  padding: 6px 8px 6px 12px;
+}
+.app[data-mobile] .sheet-head .icon-btn {
+  width: 38px;
+  height: 38px;
+}
+.app[data-mobile] .sheet-titlebar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 4px 16px 9px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.app[data-mobile] .sheet-titlebar .sheet-title {
+  font-size: 22px;
+}
+.app[data-mobile] .sheet-body {
+  padding: 14px 16px 20px;
+  gap: 16px;
+}
+.app[data-mobile] .sheet-foot {
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  gap: 8px;
+}
+.app[data-mobile] .sheet-foot .btn {
+  min-height: 38px;
+  height: 38px;
+}
+.app[data-mobile] .sheet-hint {
+  display: none;
+}
+
+/* ----------------------------------------------------- section tabs */
+/*
+ * Long editors and settings pages split into a few named sections. The strip
+ * scrolls sideways, so labels stay readable instead of being abbreviated.
+ */
+.tabstrip {
+  display: flex;
+  gap: 6px;
+  padding: 2px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.tabstrip::-webkit-scrollbar {
+  display: none;
+}
+.tabstrip-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.tabstrip-tab:active {
+  background: var(--surface-hover);
+}
+.tabstrip-tab[data-active="true"] {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.tabstrip-badge {
+  min-width: 17px;
+  height: 17px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.app[data-mobile] .tabstrip {
+  margin-top: 2px;
+}
+.app[data-mobile] .sheet-grid,
+.app[data-mobile] .sheet-grid.three {
+  grid-template-columns: 1fr;
+}
+.app[data-mobile] .scope-row {
+  flex-wrap: wrap;
+}
+
+/* Command palette and quick add sit under the thumb, full width. */
+.app[data-mobile] .palette-backdrop {
+  padding: calc(env(safe-area-inset-top) + 8px) 8px calc(env(safe-area-inset-bottom) + 8px);
+  align-items: flex-start;
+}
+.app[data-mobile] .palette {
+  width: 100% !important;
+  max-height: 82dvh;
+  border-radius: var(--radius-lg);
+}
+.app[data-mobile] .palette-input input {
+  font-size: 16px;
+}
+.app[data-mobile] .palette-item {
+  min-height: 44px;
+}
+
+/* Right-click replacement: a bottom action sheet with a scrim. The scrim is a
+   real element, not a pseudo-element, so it is still present for the click
+   that follows pointerdown and that click cannot reach the calendar below. */
+.ctx-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 109;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  animation: fade 120ms var(--ease);
+  cursor: default;
+}
+.app[data-mobile] .ctx {
+  left: 0 !important;
+  right: 0;
+  top: auto !important;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  max-height: 72dvh;
+  overflow-y: auto;
+  padding: 5px 10px calc(10px + env(safe-area-inset-bottom));
+  border: 0;
+  border-top: 1px solid var(--border-strong);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -14px 44px rgb(0 0 0 / 0.32);
+  animation: mobile-sheet-in 180ms var(--ease);
+}
+.app[data-mobile] .ctx-head {
+  min-height: 38px;
+  padding: 5px 8px 7px;
+  font-size: 15px;
+}
+.app[data-mobile] .ctx-item {
+  min-height: 46px;
+  padding: 0 10px;
+  font-size: 15px;
+  border-radius: 9px;
+}
+.app[data-mobile] .ctx-item svg {
+  color: var(--text-2);
+}
+.app[data-mobile] .ctx-back {
+  color: var(--text-2);
+  font-weight: 500;
+}
+.app[data-mobile] .ctx-more {
+  color: var(--text-2);
+}
+.app[data-mobile] .ctx-chevron {
+  margin-left: auto;
+  flex: none;
+}
+.app[data-mobile] .ctx-sep {
+  margin: 6px 4px;
+}
+.app[data-mobile] .ctx-label {
+  padding: 8px 9px 5px;
+}
+.app[data-mobile] .ctx-swatch {
+  width: 34px;
+  height: 34px;
+}
+
+/* Quick look is an action sheet too: a readable header, full-width actions. */
+.app[data-mobile] .ctx-quick,
+.app[data-mobile] .ctx-calendar,
+.app[data-mobile] .ctx-slot {
+  width: 100%;
+  min-width: 0;
+}
+.app[data-mobile] .ql-head {
+  min-height: 34px;
+  padding: 2px 6px 0 10px;
+}
+.app[data-mobile] .ql-title {
+  padding: 6px 10px;
+  font-size: 20px;
+}
+.app[data-mobile] .ql-meta {
+  gap: 7px;
+  padding: 0 10px;
+  font-size: var(--fs-sm);
+}
+.app[data-mobile] .ql-body {
+  margin: 10px 10px 0;
+  padding-top: 9px;
+  font-size: var(--fs-md);
+  -webkit-line-clamp: 5;
+}
+.app[data-mobile] .ql-actions {
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 6px 2px;
+}
+.app[data-mobile] .ql-actions .btn {
+  flex: 1 1 auto;
+  min-height: 40px;
+  height: 40px;
+  justify-content: center;
+  font-size: var(--fs-md);
+}
+.app[data-mobile] .ql-actions .spacer {
+  display: none;
+}
+.app[data-mobile] .ql-actions .btn.danger {
+  flex-basis: 100%;
+}
+
+/* Collection overviews keep the same sheet, but cards stack in one column. */
+.app[data-mobile] .modal.collection-modal,
+.app[data-mobile] .modal.team-modal {
+  max-height: 92dvh;
+}
+.app[data-mobile] .collection-body {
+  padding: 12px 14px calc(20px + env(safe-area-inset-bottom));
+}
+.app[data-mobile] .collection-grid,
+.app[data-mobile] .team-grid {
+  grid-template-columns: 1fr;
+}
+.app[data-mobile] .collection-card {
+  min-height: 58px;
+}
+
+/* The setup wizard is the whole screen on a phone. */
+.app[data-mobile] .onboarding {
+  padding: 0;
+}
+@media (max-width: 760px) {
+  .app[data-mobile] .onboarding-card {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+  .app[data-mobile] .onboarding-head {
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+  .app[data-mobile] .onboarding-body {
+    padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .app[data-mobile] .onboarding-foot {
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    flex-wrap: wrap;
+  }
+  .app[data-mobile] .onboarding-choices {
+    grid-template-columns: 1fr;
+  }
+  .app[data-mobile] .onboarding-themes {
+    gap: 6px;
+  }
+  .app[data-mobile] .theme-card {
+    padding: 12px 5px;
+    font-size: var(--fs-sm);
+  }
+  .app[data-mobile] .onboarding-row {
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .app[data-mobile] .onboarding-row > :first-child {
+    min-width: 0;
+  }
+  .app[data-mobile] .backup-path,
+  .app[data-mobile] .backup-folder {
+    align-items: flex-start;
+    word-break: break-all;
+  }
+}
+
+/* Sync panel: stack the status facts and wrap long folder paths. */
+.sync-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sync-panel[hidden],
+.sync-section[hidden] {
+  display: none;
+}
+.app[data-mobile] .sync-panel {
+  margin-top: 10px;
+}
+.app[data-mobile] .sync-folder-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+.app[data-mobile] .sync-folder-line > svg {
+  flex: none;
+  color: var(--text-3);
+}
+.app[data-mobile] .sync-folder-line > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app[data-mobile] .sync-facts {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.app[data-mobile] .sync-fact-value {
+  overflow-wrap: anywhere;
+}
+.app[data-mobile] .sync-container {
+  flex-wrap: wrap;
+}
+.app[data-mobile] .sync-container-path {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.app[data-mobile] .sync-actions,
+.app[data-mobile] .sync-blocked-actions,
+.app[data-mobile] .sync-conflict-actions {
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.app[data-mobile] .sync-conflict {
+  flex-wrap: wrap;
+}
+.app[data-mobile] .sync-conflict-main {
+  min-width: 0;
+}
+
+/* Inline hints about keyboard shortcuts are noise on a touch screen. */
+.app[data-mobile] .palette-foot,
+.app[data-mobile] .shortcut {
+  display: none;
+}
+
+/* Mobile calendars: leave a thumb-sized gutter and let gestures breathe. */
+.app[data-mobile] .tg,
+.app[data-mobile] .month-scroll,
+.app[data-mobile] .agenda,
+.app[data-mobile] .year-scroll {
+  touch-action: manipulation;
+}
+.app[data-mobile] .tg-body,
+.app[data-mobile] .tg-cols {
+  touch-action: pan-y pan-x;
+}
+.app[data-mobile] .tf input,
+.app[data-mobile] .tf select {
+  min-height: 38px;
+  font-size: 16px;
+}
+
+/* Toasts clear the tab bar and the home indicator. */
+.app[data-mobile] .toasts {
+  bottom: calc(66px + env(safe-area-inset-bottom));
+}
+
+/* Portalled controls sit outside the app element, so they need the phone
+   rules under a viewport query instead of the shell data attribute. */
+@media (max-width: 760px) {
+  .dd-menu,
+  .time-popover {
+    z-index: 125;
+  }
+  .dd-menu {
+    max-height: 60dvh;
+  }
+  .dd-option {
+    min-height: 44px;
+    height: auto;
+    font-size: 16px;
+  }
+  .time-popover {
+    gap: 6px;
+    padding: 8px;
+    max-width: calc(100vw - 16px);
+  }
+  .time-select {
+    height: 38px;
+    font-size: 16px;
+  }
+}
+
+/* --------------------------------------------------------------- tiny */
+@media (max-width: 360px) {
+  .app[data-mobile] {
+    --fs-md: 13.5px;
+  }
+  .app[data-mobile] .topbar-date {
+    max-width: 96px;
+  }
+  .mobile-more-grid {
+    grid-template-columns: 1fr;
+  }
+  .app[data-mobile] .workspace[data-mobile="true"] .pane-actions {
+    justify-content: flex-end;
+  }
+}
