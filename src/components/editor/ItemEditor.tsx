@@ -31,7 +31,7 @@ import {
 } from "../../db/db";
 import { createFromDraft } from "../../lib/create";
 import { uid } from "../../lib/id";
-import { eod, minutesOfDay, sod } from "../../lib/date";
+import { addDays, differenceInCalendarDays, eod, minutesOfDay, sod } from "../../lib/date";
 import { blocksPatch, newBlock, suggestBlock } from "../../lib/timeblocks";
 import { masterOf } from "../../lib/tasks";
 import { RecurrenceField } from "./RecurrenceField";
@@ -106,6 +106,14 @@ export function ItemEditor() {
 
   const setStartDate = (value: string) => {
     if (!value || !draft) return;
+    if (draft.allDay) {
+      const start = sod(new Date(`${value}T00:00`).getTime());
+      const currentStart = sod(draft.start ?? start);
+      const currentEnd = sod(draft.end ?? draft.start ?? start);
+      const span = Math.max(0, differenceInCalendarDays(currentEnd, currentStart));
+      patch({ start, end: eod(addDays(new Date(start), span).getTime()) });
+      return;
+    }
     const time = draft.start ? format(draft.start, "HH:mm") : "09:00";
     const ts = new Date(`${value}T${time}`).getTime();
     const span = duration > 0 ? duration : 3_600_000;
@@ -125,7 +133,24 @@ export function ItemEditor() {
     const base = new Date(draft.end ?? draft.start);
     base.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
     let end = base.getTime();
-    if (end <= draft.start) end += 86_400_000;
+    if (end <= draft.start) end = addDays(base, 1).getTime();
+    patch({ end });
+  };
+
+  const setEndDate = (value: string) => {
+    if (!value || !draft?.start) return;
+    const startDay = sod(draft.start);
+    if (draft.allDay) {
+      const chosen = eod(new Date(`${value}T12:00`).getTime());
+      patch({ end: Math.max(eod(startDay), chosen) });
+      return;
+    }
+    const endTime = new Date(draft.end ?? draft.start);
+    const day = Math.max(sod(new Date(`${value}T00:00`).getTime()), startDay);
+    const base = new Date(day);
+    base.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+    let end = base.getTime();
+    if (end <= draft.start) end = addDays(base, 1).getTime();
     patch({ end });
   };
 
@@ -200,12 +225,12 @@ export function ItemEditor() {
 
   const toggleAllDay = () => {
     if (!draft) return;
+    const start = sod(draft.start ?? Date.now());
+    const end = Math.max(start, sod(draft.end ?? draft.start ?? Date.now()));
     if (draft.allDay) {
-      const base = draft.start ?? Date.now();
-      patch({ allDay: false, start: sod(base) + 9 * 3_600_000, end: sod(base) + 10 * 3_600_000 });
+      patch({ allDay: false, start: start + 9 * 3_600_000, end: end + 10 * 3_600_000 });
     } else {
-      const base = draft.start ?? Date.now();
-      patch({ allDay: true, start: sod(base), end: sod(base) + 86_400_000 - 1 });
+      patch({ allDay: true, start, end: eod(end) });
     }
   };
 
@@ -235,6 +260,14 @@ export function ItemEditor() {
       if (type === "event" && start == null) {
         start = sod(Date.now()) + 9 * 3_600_000;
         end = start + 3_600_000;
+      }
+      if (type === "event" && start != null) {
+        if (draft.allDay) {
+          start = sod(start);
+          end = eod(Math.max(start, end ?? start));
+        } else if (end != null && end <= start) {
+          end = addDays(new Date(start), 1).getTime();
+        }
       }
       // A task's calendar placement is the first of its blocks; with none it
       // has no time on the calendar at all, which is a valid way to work.
@@ -449,13 +482,22 @@ export function ItemEditor() {
 
         {sectionVisible("details") && draft.type === "event" && (
           <>
-            <div className="sheet-grid">
+            <div className="sheet-grid three">
               <label className="field">
-                <span className="field-label">Date</span>
+                <span className="field-label">Starts</span>
                 <input
                   type="date"
                   value={dateValue(draft.start)}
                   onChange={(e) => setStartDate(e.target.value)}
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">Ends</span>
+                <input
+                  type="date"
+                  min={draft.start ? dateValue(draft.start) : undefined}
+                  value={dateValue(draft.end ?? draft.start)}
+                  onChange={(e) => setEndDate(e.target.value)}
                 />
               </label>
               <label className="field">
@@ -481,21 +523,19 @@ export function ItemEditor() {
             {!draft.allDay && (
               <div className="sheet-grid">
                 <div className="field">
-                  <span className="field-label">Starts</span>
+                  <span className="field-label">Start time</span>
                   <TimeField
                     value={draft.start == null ? null : minutesOfDay(draft.start)}
                     onChange={setStartTime}
                     ariaLabel="Starts"
-                    step={5}
                   />
                 </div>
                 <div className="field">
-                  <span className="field-label">Ends</span>
+                  <span className="field-label">End time</span>
                   <TimeField
                     value={draft.end == null ? null : minutesOfDay(draft.end)}
                     onChange={setEndTime}
                     ariaLabel="Ends"
-                    step={5}
                   />
                 </div>
               </div>
@@ -555,7 +595,6 @@ export function ItemEditor() {
                   value={draft.dueAt == null ? null : minutesOfDay(draft.dueAt)}
                   onChange={setDueTime}
                   ariaLabel="Due time"
-                  step={5}
                 />
               </div>
             )}
@@ -634,13 +673,11 @@ export function ItemEditor() {
                       ariaLabel="Block start"
                       value={minutesOfDay(block.start)}
                       onChange={(minutes) => setBlockStart(block, minutes)}
-                      step={5}
                     />
                     <TimeField
                       ariaLabel="Block end"
                       value={minutesOfDay(block.end)}
                       onChange={(minutes) => setBlockEnd(block, minutes)}
-                      step={5}
                     />
                     <button
                       className="icon-btn"

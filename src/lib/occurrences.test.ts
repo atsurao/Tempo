@@ -189,4 +189,34 @@ describe("events keep their old shape", () => {
     expect(occs.filter((o) => o.isDue)[0].start).toBe(day(20, 23, 59));
     expect(occs.filter((o) => o.blockId === "a")[0].start).toBe(day(20, 9));
   });
+
+  it("keeps an all-day event spanning several days as one occurrence", () => {
+    const item: Item = {
+      id: "trip",
+      type: "event",
+      title: "Trip",
+      createdAt: 0,
+      updatedAt: 0,
+      allDay: true,
+      start: day(20),
+      end: day(23) - 1,
+    };
+    const [occ] = buildOccurrences([item], window.from, window.to);
+    expect(occ.end - occ.start).toBe(3 * 86_400_000 - 1);
+  });
+
+  it("keeps an overnight event spanning midnight", () => {
+    const item: Item = {
+      id: "night",
+      type: "event",
+      title: "Night shift",
+      createdAt: 0,
+      updatedAt: 0,
+      start: day(20, 22),
+      end: day(21, 2),
+    };
+    const [occ] = buildOccurrences([item], window.from, window.to);
+    expect(occ.start).toBe(day(20, 22));
+    expect(occ.end).toBe(day(21, 2));
+  });
 });

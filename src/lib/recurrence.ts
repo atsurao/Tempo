@@ -1,5 +1,7 @@
+import { differenceInCalendarDays } from "date-fns";
 import { RRule } from "rrule";
 import type { Item } from "../types";
+import { DAY } from "./date";
 
 /**
  * Recurrence is expanded in "floating" local time: a 9:00 class stays at 9:00
@@ -40,7 +42,22 @@ function anchorOf(item: Item): number | null {
 export function durationOf(item: Item): number {
   const anchor = anchorOf(item);
   if (anchor == null) return 0;
-  if (item.allDay) return 24 * 60 * 60 * 1000;
+  if (item.allDay) {
+    // All-day ends are inclusive, while a few older imports stored the next
+    // midnight instead. Count calendar days so both shapes keep the full span.
+    const start = new Date(anchor);
+    const end = new Date(item.end ?? anchor);
+    const exclusiveMidnight =
+      end.getHours() === 0 &&
+      end.getMinutes() === 0 &&
+      end.getSeconds() === 0 &&
+      end.getMilliseconds() === 0;
+    const days = Math.max(
+      1,
+      differenceInCalendarDays(end, start) + (exclusiveMidnight ? 0 : 1),
+    );
+    return days * DAY - 1;
+  }
   const end = item.end ?? anchor;
   return Math.max(0, end - anchor);
 }

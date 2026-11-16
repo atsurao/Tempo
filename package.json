@@ -1,7 +1,7 @@
 {
   "name": "tempo",
   "private": true,
-  "version": "0.3.8",
+  "version": "0.3.9",
   "type": "module",
   "description": "A calm, local-first day planner: calendar, tasks, notes and focus in one place.",
   "scripts": {

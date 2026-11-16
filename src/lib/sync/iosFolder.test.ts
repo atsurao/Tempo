@@ -6,13 +6,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 const files = new Map<string, string>();
 const dirs = new Set<string>([""]);
+const hiddenFromExists = new Set<string>();
+let getInfoCalls = 0;
+let workspaceReadFailures = 0;
 
 vi.mock("tauri-plugin-scoped-storage-api", () => {
   const parts = (path: string) => path.split("/").filter(Boolean);
   return {
-    getFolderInfo: async () => ({ name: "Shared" }),
+    getFolderInfo: async () => {
+      getInfoCalls += 1;
+      return { name: "Shared" };
+    },
     exists: async (_folder: string, path: string) =>
-      files.has(path) || dirs.has(path),
+      !hiddenFromExists.has(path) && (files.has(path) || dirs.has(path)),
     stat: async (_folder: string, path: string) => {
       if (files.has(path)) return { isDir: false, size: files.get(path)!.length };
       if (dirs.has(path)) return { isDir: true, size: null };
@@ -40,6 +46,10 @@ vi.mock("tauri-plugin-scoped-storage-api", () => {
       }));
     },
     readTextFile: async (_folder: string, path: string) => {
+      if (path === "workspace.json" && workspaceReadFailures > 0) {
+        workspaceReadFailures -= 1;
+        throw Object.assign(new Error(`no such file: ${path}`), { code: "NOT_FOUND" });
+      }
       const text = files.get(path);
       if (text === undefined) {
         throw Object.assign(new Error(`no such file: ${path}`), { code: "NOT_FOUND" });
@@ -72,6 +82,9 @@ describe("IosSyncFolder", () => {
     files.clear();
     dirs.clear();
     dirs.add("");
+    hiddenFromExists.clear();
+    getInfoCalls = 0;
+    workspaceReadFailures = 0;
   });
 
   it("reads a peer's journal while still refusing to write into it", async () => {
@@ -99,5 +112,30 @@ describe("IosSyncFolder", () => {
     const phone = new IosSyncFolder({ localDeviceId: "phone-1", folderId: "f" });
     await expect(phone.listBatches("phone-1")).resolves.toEqual([]);
     await expect(phone.listSnapshots("phone-1")).resolves.toEqual([]);
+  });
+
+  it("reads a workspace without a separate exists probe", async () => {
+    const phone = new IosSyncFolder({ localDeviceId: "phone-1", folderId: "f" });
+    files.set("workspace.json", "workspace");
+    hiddenFromExists.add("workspace.json");
+
+    await expect(phone.readWorkspace()).resolves.toBe("workspace");
+    expect(getInfoCalls).toBe(0);
+  });
+
+  it("refreshes the handle and retries a missing workspace", async () => {
+    const phone = new IosSyncFolder({ localDeviceId: "phone-1", folderId: "f" });
+    files.set("workspace.json", "workspace");
+    workspaceReadFailures = 1;
+
+    await expect(phone.readWorkspace()).resolves.toBe("workspace");
+    expect(getInfoCalls).toBe(1);
+  });
+
+  it("reports a genuinely missing workspace only after a refresh", async () => {
+    const phone = new IosSyncFolder({ localDeviceId: "phone-1", folderId: "f" });
+
+    await expect(phone.readWorkspace()).resolves.toBeNull();
+    expect(getInfoCalls).toBe(1);
   });
 });

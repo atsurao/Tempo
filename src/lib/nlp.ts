@@ -1,4 +1,4 @@
-import { addDays, format, setHours, setMinutes, startOfDay } from "date-fns";
+import { addDays, endOfDay, format, setHours, setMinutes, startOfDay } from "date-fns";
 import type { Priority } from "../types";
 import { clockTime, type TimeFormat } from "./clock";
 
@@ -208,7 +208,7 @@ export function parseQuickAdd(
   } else if (day) {
     if (allDay) {
       start = day.getTime();
-      end = day.getTime() + 24 * 60 * 60_000;
+      end = endOfDay(day).getTime();
       type = "event";
     } else {
       dueAt = setMinutes(setHours(day, 23), 59).getTime();

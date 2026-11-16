@@ -39,7 +39,7 @@ export function TimeField({
   value,
   onChange,
   ariaLabel,
-  step = 5,
+  step = 1,
   disabled,
   invalid,
   className,

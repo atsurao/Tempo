@@ -154,6 +154,13 @@ struct FolderIdArgs: Decodable {
 final class ScopedStoragePlugin: Plugin, UIDocumentPickerDelegate {
     private var pendingInvoke: Invoke?
     private let folderStore = IOSFolderStore()
+    /// Coordinated iCloud reads can block while a dataless file downloads.
+    /// Keep them off the main thread so the webview stays responsive.
+    private let ioQueue = DispatchQueue(
+        label: "app.scoped-storage.io",
+        qos: .utility,
+        attributes: .concurrent
+    )
 
     @objc public func pickFolder(_ invoke: Invoke) {
         DispatchQueue.main.async {
@@ -190,10 +197,7 @@ final class ScopedStoragePlugin: Plugin, UIDocumentPickerDelegate {
     @objc public func getFolderInfo(_ invoke: Invoke) {
         run(invoke) {
             let args = try invoke.parseArgs(FolderIdArgs.self)
-            guard let info = self.folderStore.getInfo(id: args.folderId) else {
-                throw scopedStorageError(.folderNotFound, "Folder not found: \(args.folderId)")
-            }
-            return self.folderDTO(info)
+            return self.folderDTO(try self.refreshFolderInfo(id: args.folderId))
         }
     }
 
@@ -257,7 +261,8 @@ final class ScopedStoragePlugin: Plugin, UIDocumentPickerDelegate {
         run(invoke) {
             let args = try invoke.parseArgs(ReadFileArgs.self)
             let data = try self.withFolderURL(folderId: args.folderId) { folderURL in
-                let target = try self.requireFile(base: folderURL, relPath: args.path)
+                let target = try self.resolveReadableChildURL(base: folderURL, relPath: args.path)
+                self.materializeIfNeeded(at: target)
                 return try self.coordinatedRead(at: target) { try Data(contentsOf: $0) }
             }
             return ReadFileResponseDTO(data: Array(data))
@@ -268,7 +273,8 @@ final class ScopedStoragePlugin: Plugin, UIDocumentPickerDelegate {
         run(invoke) {
             let args = try invoke.parseArgs(ReadFileArgs.self)
             let contents = try self.withFolderURL(folderId: args.folderId) { folderURL in
-                let target = try self.requireFile(base: folderURL, relPath: args.path)
+                let target = try self.resolveReadableChildURL(base: folderURL, relPath: args.path)
+                self.materializeIfNeeded(at: target)
                 let data = try self.coordinatedRead(at: target) { try Data(contentsOf: $0) }
                 guard let string = String(data: data, encoding: .utf8) else {
                     throw scopedStorageError(.ioError, "File is not valid UTF-8")
@@ -283,7 +289,8 @@ final class ScopedStoragePlugin: Plugin, UIDocumentPickerDelegate {
         run(invoke) {
             let args = try invoke.parseArgs(ReadFileArgs.self)
             let lines = try self.withFolderURL(folderId: args.folderId) { folderURL in
-                let target = try self.requireFile(base: folderURL, relPath: args.path)
+                let target = try self.resolveReadableChildURL(base: folderURL, relPath: args.path)
+                self.materializeIfNeeded(at: target)
                 let data = try self.coordinatedRead(at: target) { try Data(contentsOf: $0) }
                 guard let string = String(data: data, encoding: .utf8) else {
                     throw scopedStorageError(.ioError, "File is not valid UTF-8")
@@ -563,25 +570,87 @@ final class ScopedStoragePlugin: Plugin, UIDocumentPickerDelegate {
         pendingInvoke = nil
     }
 
-    private func run<T: Encodable>(_ invoke: Invoke, _ block: () throws -> T) {
-        do {
-            invoke.resolve(try block())
-        } catch {
-            invoke.reject(scopedStorageRejectMessage(for: error))
+    private func run<T: Encodable>(_ invoke: Invoke, _ block: @escaping () throws -> T) {
+        ioQueue.async {
+            do {
+                invoke.resolve(try block())
+            } catch {
+                invoke.reject(scopedStorageRejectMessage(for: error))
+            }
         }
     }
 
-    private func runVoid(_ invoke: Invoke, _ block: () throws -> Void) {
-        do {
-            try block()
-            invoke.resolve()
-        } catch {
-            invoke.reject(scopedStorageRejectMessage(for: error))
+    private func runVoid(_ invoke: Invoke, _ block: @escaping () throws -> Void) {
+        ioQueue.async {
+            do {
+                try block()
+                invoke.resolve()
+            } catch {
+                invoke.reject(scopedStorageRejectMessage(for: error))
+            }
         }
     }
 
     private func folderDTO(_ folder: StoredFolder) -> FolderHandleDTO {
         FolderHandleDTO(id: folder.id, name: folder.name, uri: folder.uri)
+    }
+
+    /// Resolve the saved handle, verify the directory is genuinely reachable,
+    /// and store a fresh bookmark. iOS does not always mark a bookmark stale
+    /// when its sandbox token stops working after a relaunch; re-creating it
+    /// here repairs the same folder ID without making the reader pick it again.
+    private func refreshFolderInfo(id: String) throws -> StoredFolder {
+        guard
+            let info = folderStore.getInfo(id: id),
+            let bookmark = folderStore.getBookmark(id: id)
+        else {
+            throw scopedStorageError(.folderNotFound, "Folder not found: \(id)")
+        }
+
+        var stale = false
+        let url = try URL(
+            resolvingBookmarkData: bookmark,
+            options: .withoutUI,
+            relativeTo: nil,
+            bookmarkDataIsStale: &stale
+        )
+        let accessStarted = url.startAccessingSecurityScopedResource()
+        defer { if accessStarted { url.stopAccessingSecurityScopedResource() } }
+
+        var isDirectory: ObjCBool = false
+        guard
+            FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
+            isDirectory.boolValue
+        else {
+            throw scopedStorageError(
+                .permissionDenied,
+                "Tempo lost access to this sync folder. Choose it again in the Files app."
+            )
+        }
+
+        do {
+            _ = try FileManager.default.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: nil,
+                options: []
+            )
+        } catch {
+            throw scopedStorageError(
+                .permissionDenied,
+                "Tempo could not read this sync folder. Open it in Files, then try again. \(error.localizedDescription)"
+            )
+        }
+
+        let name = (try? url.resourceValues(forKeys: [.nameKey]).name) ?? info.name ?? url.lastPathComponent
+        if let refreshed = try? url.bookmarkData(
+            options: .minimalBookmark,
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        ) {
+            folderStore.update(id: id, bookmark: refreshed, name: name, uri: url.absoluteString)
+            return StoredFolder(id: id, name: name, uri: url.absoluteString)
+        }
+        return StoredFolder(id: id, name: name, uri: url.absoluteString)
     }
 
     private func withFolderURL<T>(folderId: String, _ block: (URL) throws -> T) throws -> T {
@@ -684,6 +753,39 @@ final class ScopedStoragePlugin: Plugin, UIDocumentPickerDelegate {
             throw scopedStorageError(.invalidArgument, "Path is not a file")
         }
         return url
+    }
+
+    /// Reads must not use fileExists as a gate: an iCloud placeholder can be
+    /// reported as absent until the coordinated read materializes it.
+    private func resolveReadableChildURL(base: URL, relPath: String) throws -> URL {
+        let url = try resolveChildURL(base: base, relPath: relPath)
+        var isDirectory: ObjCBool = false
+        if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue {
+            throw scopedStorageError(.invalidArgument, "Path is not a file")
+        }
+        return url
+    }
+
+    /// Give a dataless iCloud file a short chance to materialize before the
+    /// coordinated read. The read still remains the source of truth.
+    private func materializeIfNeeded(at url: URL, timeout: TimeInterval = 5) {
+        let keys: Set<URLResourceKey> = [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey]
+        guard
+            let values = try? url.resourceValues(forKeys: keys),
+            values.isUbiquitousItem == true,
+            values.ubiquitousItemDownloadingStatus != .current
+        else {
+            return
+        }
+
+        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let status = (try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]))?
+                .ubiquitousItemDownloadingStatus
+            if status == .current { return }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
     }
 
     private func requireDirectory(base: URL, relPath: String) throws -> URL {

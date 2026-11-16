@@ -6,7 +6,6 @@ import {
   readTextFile,
   removeFile,
   rename,
-  stat,
   writeTextFile,
 } from "tauri-plugin-scoped-storage-api";
 import {
@@ -138,6 +137,16 @@ export class IosSyncFolder implements SyncFolder {
   }
 
   async readWorkspace(): Promise<string | null> {
+    const first = await this.read(WORKSPACE);
+    if (first !== null) return first;
+
+    // A nil read is not enough to conclude that the workspace is gone. iOS
+    // can resolve a saved bookmark without restoring the sandbox extension
+    // after the app is relaunched, and iCloud can hand back a dataless file.
+    // Asking the native layer for the folder info refreshes the bookmark in
+    // place (and touches the directory), so retry once before the setup flow
+    // offers to archive the old workspace.
+    await getFolderInfo(this.folderId);
     return await this.read(WORKSPACE);
   }
 
@@ -266,13 +275,19 @@ export class IosSyncFolder implements SyncFolder {
   }
 
   private async read(path: string): Promise<string | null> {
-    if (!(await exists(this.folderId, path))) return null;
-    const info = await stat(this.folderId, path);
-    if (info.isDir) throw new Error(`${path} is a folder, not a journal file.`);
-    if (info.size != null && info.size > MAX_SYNC_FILE_BYTES) {
-      throw new Error("That sync journal file is unexpectedly large.");
+    // Do not preflight with exists(): on iOS that is an uncoordinated
+    // metadata check and can return false for an iCloud placeholder even
+    // though the coordinated read below would materialize the file.
+    try {
+      const text = await readTextFile(this.folderId, path);
+      if (text.length > MAX_SYNC_FILE_BYTES) {
+        throw new Error("That sync journal file is unexpectedly large.");
+      }
+      return text;
+    } catch (error) {
+      if (isMissing(error)) return null;
+      throw error;
     }
-    return await readTextFile(this.folderId, path);
   }
 
   /** Create without ever overwriting a peer's file. */

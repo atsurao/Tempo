@@ -23,6 +23,7 @@ export function PostponeMenu() {
   const quickDays = useMemo(() => {
     const today = sod(Date.now());
     return [
+      { label: "Today", day: today },
       { label: "Tomorrow", day: addDays(new Date(today), 1).getTime() },
       { label: "In 3 days", day: addDays(new Date(today), 3).getTime() },
       { label: "Next week", day: addDays(new Date(today), 7).getTime() },

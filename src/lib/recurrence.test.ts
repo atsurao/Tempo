@@ -69,6 +69,30 @@ describe("expandRecurrence", () => {
     const item = base({ start: at(12), recurrence: { rrule: "NOT_A_RULE" } });
     expect(expandRecurrence(item, at(1), at(31))).toEqual([]);
   });
+
+  it("keeps a multi-day all-day span on every occurrence", () => {
+    const start = new Date(2026, 9, 12).getTime();
+    const item = base({
+      start,
+      end: new Date(2026, 9, 14, 23, 59, 59, 999).getTime(),
+      allDay: true,
+      recurrence: { rrule: "FREQ=WEEKLY;BYDAY=MO" },
+    });
+    const [instance] = expandRecurrence(item, start, new Date(2026, 9, 12, 23, 59).getTime());
+    expect(instance.end - instance.start).toBe(3 * 86_400_000 - 1);
+    expect(new Date(instance.end).getDate()).toBe(14);
+  });
+
+  it("keeps an older all-day end at the next midnight to one day", () => {
+    const item = base({
+      start: new Date(2026, 9, 12).getTime(),
+      end: new Date(2026, 9, 13).getTime(),
+      allDay: true,
+      recurrence: { rrule: "FREQ=WEEKLY;BYDAY=MO" },
+    });
+    const [instance] = expandRecurrence(item, item.start!, new Date(2026, 9, 12, 23, 59).getTime());
+    expect(instance.end - instance.start).toBe(86_400_000 - 1);
+  });
 });
 
 describe("nextOccurrence", () => {

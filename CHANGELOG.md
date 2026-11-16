@@ -6,6 +6,26 @@ number is kept in `package.json`, `src-tauri/tauri.conf.json` and
 
 ## Unreleased
 
+## 0.3.9 — 2026-11-15
+
+### Added
+
+- Every time picker now offers every minute of the hour instead of five-minute
+  steps, including event times, due times and task blocks.
+- The postpone menu now includes **Today** alongside tomorrow, three days, next
+  week and the date picker.
+- Events can span multiple days. The event editor now has separate start and end
+  dates, so an all-day event can cover a range of days and a timed event can run
+  from the evening of one day into the morning of the next.
+
+### Fixed
+
+- Repeating all-day events keep their full multi-day span on every occurrence.
+  Older all-day events whose end was stored at the next midnight stay one day.
+- iOS sync no longer mistakes a temporarily inaccessible iCloud bookmark for a
+  missing workspace. It reads the file through the coordinated path, refreshes
+  the saved folder handle in place, and retries before reporting it missing.
+
 ## 0.3.8 — 2026-11-06
 
 ### Added
